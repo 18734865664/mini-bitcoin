@@ -3,10 +3,11 @@ package main
 import (
 	"math/big"
 	"encoding/hex"
+	"fmt"
 )
 
 type PoW struct {
-	target *big.Int
+	target []byte
 	Blk *Block
 }
 
@@ -19,15 +20,27 @@ func (obj *PoW)Try()[]byte{
 		tempHex := hex.EncodeToString(tempHash)
 		var tempBig big.Int
 		tempBigString, _:= tempBig.SetString(tempHex, 16)
-		result := obj.target.Cmp(tempBigString)
-		if result >  0 {
+		fmt.Println(tempBigString)
+		temptarget,_:= tempBig.SetString(hex.EncodeToString(obj.target), 16)
+		fmt.Println("==============================")
+		fmt.Println(temptarget)
+		result := temptarget.Cmp(tempBigString)
+		if result ==  1 {
 			break
 		}
 		nonce ++
+		fmt.Println(nonce)
 	}
 	return tempHash
 }
 
-func Check()  {
-
+func (obj *PoW)Check() bool {
+	tempHash := obj.Blk.SetHash1()
+	var tempInt big.Int
+	tempHashInt, _ := tempInt.SetString(hex.EncodeToString(tempHash), 16)
+	temptarget,_:= tempInt.SetString(hex.EncodeToString(obj.target), 16)
+	if temptarget.Cmp(tempHashInt) == 1{
+		return true
+	}
+	return false
 }

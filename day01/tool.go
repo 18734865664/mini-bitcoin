@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"log"
+	"fmt"
 )
 
 
@@ -20,6 +21,12 @@ func Uint64ToByte(i uint64)[]byte{
 	return buf.Bytes()
 }
 
-
+func ShowUsage()  {
+	str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
+       main addBlock --cname <BlockChain Name>
+       main showBlockChain --cname <BlockChain Name>
+		`
+	fmt.Println(str)
+}
 
 

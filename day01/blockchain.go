@@ -36,15 +36,16 @@ func NewBlockChain(ChainName string)*BlockChain{
 
 // 遍历输出链中的内容
 func (obj *BlockChain)GetAllBlockHash(){
+	fmt.Printf("show %s blockchain blocks\n", obj.ChainName)
 	last := GetLastBlockHash(obj.ChainName)
 	blk := obj.GetBlock(last)
-	fmt.Printf("blk Hash:%x\n", blk.Hash)
+	blk.ShowBlock()
 	for {
 		if len(blk.PreHash) == 0{
 			break
 		}
 		blk = obj.GetBlock(blk.PreHash)
-		fmt.Printf("blk Hash:%x\n", blk.Hash)
+		blk.ShowBlock()
 	}
 	fmt.Println("show all block info seccuss!!! ")
 }
@@ -72,15 +73,12 @@ func GetLastBlockHash(ChainName string)[]byte {
 
 
 // add block
-func (obj *BlockChain)AddBlock(data string, dif, nonce uint64)bool{
+func (obj *BlockChain)AddBlock(data string, dif, nonce uint64){
     // 获取上一个区块的hash
 	preHash := GetLastBlockHash(obj.ChainName)
-	err := NewBlock(preHash, data, dif, nonce, obj.ChainName)
-	istrue := true
-	if err != nil{
-		istrue = false
-		return istrue
-	}
+	blk := NewBlock(preHash, data, dif, nonce, obj.ChainName)
+	pw := blk.NewPoW()
+	fmt.Printf("target: %x\nfound Hash: %x\n", pw.target, blk.Hash)
 	/*
 	// 判断区块中唯一
     // 比特币系统中不需要，因为比特币系统中并不保存自身的hash
@@ -91,7 +89,6 @@ func (obj *BlockChain)AddBlock(data string, dif, nonce uint64)bool{
 		}
 	}
 	*/
-	return istrue
 }
 
 func (obj *BlockChain)GetBlock(hs []byte) *Block {

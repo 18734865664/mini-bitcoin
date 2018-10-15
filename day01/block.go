@@ -4,11 +4,11 @@ import (
 	"crypto/sha256"
 	"time"
 	"bytes"
-	"math/big"
 	"strings"
 	"github.com/boltdb/bolt"
 	"log"
 	"encoding/gob"
+	"fmt"
 )
 
 // defind block struct
@@ -35,7 +35,7 @@ type Block struct {
 	ChainName string
 }
 // get a block obj point
-func NewBlock(prehash []byte,data string, dif,nonce uint64, cName string)error{
+func NewBlock(prehash []byte,data string, dif,nonce uint64, cName string)*Block{
 	var blk Block
     blk.PreHash = prehash
 	blk.Data = []byte(data)
@@ -48,7 +48,10 @@ func NewBlock(prehash []byte,data string, dif,nonce uint64, cName string)error{
 	// blk.Hash = blk.SetHash1()
 	blk.Hash = blk.NewPoW().Try()
 	err := blk.AddBlockToDb()
-	return err
+	if err != nil{
+		fmt.Println("new block: ", err)
+	}
+	return &blk
 }
 
 // bitcoin  hash  is SHA256
@@ -93,8 +96,6 @@ func GenesisBlock()*Block{
 // new pow obj
 func (obj *Block)NewPoW()*PoW{
      // sha256 转换成16进制是64位， 所以这里的字符串需要64位
-     //
-     //
     dif := int(obj.Difficulty)
     tgtmpstr := strings.Join([]string{
 		strings.Repeat("0", dif),
@@ -103,12 +104,10 @@ func (obj *Block)NewPoW()*PoW{
 	},"")
 	pow := PoW{
 		Blk:obj,
+		target:[]byte(tgtmpstr),
 	}
 
-
     // 将目标hash 字符串转换成了big.Int类型，指明了进制为16进制
-    var temp big.Int
-	pow.target , _ = temp.SetString(tgtmpstr, 16)
 	return &pow
 }
 
@@ -158,4 +157,10 @@ func Dec(blockInfo []byte) *Block {
 	buf.Write(blockInfo)
 	dec.Decode(blk)
 	return blk
+}
+
+func (obj *Block)ShowBlock()  {
+	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\n"
+	fmt.Printf(str, obj.Hash, obj.Nonce, obj.PreHash)
+	fmt.Println(strings.Repeat("+", 20))
 }

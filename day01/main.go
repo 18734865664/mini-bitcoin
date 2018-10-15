@@ -17,12 +17,7 @@ func main() {
 	if len(args) > 3 {
 		flag.CommandLine.Parse(os.Args[2:])
 	} else if len(args) < 2{
-		str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
-		`
-		fmt.Println(str)
-
+		ShowUsage()
 		return
 	}
 	switch args[1] {
@@ -36,12 +31,7 @@ func main() {
 				fmt.Println("this blockchain is exists")
 			}
 		} else {
-			str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
-		`
-			fmt.Println(str)
-
+			ShowUsage()
 		}
 
 	case "addBlock":
@@ -49,32 +39,18 @@ func main() {
 			blkc := BlockChain{*cname}
 			blkc.AddBlock(*data, 3, 0)
 		} else {
-
-			str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
-		`
-			fmt.Println(str)
+			ShowUsage()
 		}
-
 	case "showBlockChain":
 		if *cname != "" {
 			blkc := BlockChain{*cname}
 			blkc.GetAllBlockHash()
-
 		} else {
-			str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
-		`
-			fmt.Println(str)
+			ShowUsage()
 		}
 
 	default:
-		str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock -data <blockinfo> --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
-		`
-		fmt.Println(str)
+		ShowUsage()
 	}
 }
+
