@@ -37,7 +37,7 @@ func main() {
 	case "addBlock":
 		if *data != "" && *cname != "" {
 			blkc := BlockChain{*cname}
-			blkc.AddBlock(*data, 3, 0)
+			blkc.AddBlock(*data, 2, 0)
 		} else {
 			ShowUsage()
 		}

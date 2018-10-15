@@ -9,6 +9,7 @@ import (
 	"log"
 	"encoding/gob"
 	"fmt"
+	"math/big"
 )
 
 // defind block struct
@@ -49,7 +50,7 @@ func NewBlock(prehash []byte,data string, dif,nonce uint64, cName string)*Block{
 	blk.Hash = blk.NewPoW().Try()
 	err := blk.AddBlockToDb()
 	if err != nil{
-		fmt.Println("new block: ", err)
+		fmt.Println("new block", err)
 	}
 	return &blk
 }
@@ -97,17 +98,20 @@ func GenesisBlock()*Block{
 func (obj *Block)NewPoW()*PoW{
      // sha256 转换成16进制是64位， 所以这里的字符串需要64位
     dif := int(obj.Difficulty)
-    tgtmpstr := strings.Join([]string{
-		strings.Repeat("0", dif),
-		"1",
-		strings.Repeat("0", 64 - dif - 1),
-	},"")
+    tgtbyte := bytes.Join([][]byte{
+    	bytes.Repeat([]byte{0}, dif),
+    	[]byte{1},
+    	bytes.Repeat([]byte{0}, 32 - dif - 1),
+	},[]byte{})
 	pow := PoW{
 		Blk:obj,
-		target:[]byte(tgtmpstr),
 	}
 
     // 将目标hash 字符串转换成了big.Int类型，指明了进制为16进制
+	// pow.target , _ = temp.SetString(tgtmpstr, 16)
+	tempInt := new(big.Int)
+	tempInt = tempInt.SetBytes(tgtbyte)
+	pow.target = tempInt
 	return &pow
 }
 
