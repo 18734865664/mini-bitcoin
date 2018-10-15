@@ -10,6 +10,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"math/big"
+	"strconv"
 )
 
 // defind block struct
@@ -165,6 +166,6 @@ func Dec(blockInfo []byte) *Block {
 
 func (obj *Block)ShowBlock()  {
 	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\n"
-	fmt.Printf(str, obj.Hash, obj.Nonce, obj.PreHash)
+	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash)
 	fmt.Println(strings.Repeat("+", 20))
 }

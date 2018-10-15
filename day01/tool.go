@@ -22,9 +22,9 @@ func Uint64ToByte(i uint64)[]byte{
 }
 
 func ShowUsage()  {
-	str := `Usage: main createBlockChain --address <you address> --cname <blockChain name>
-       main addBlock --cname <BlockChain Name>
-       main showBlockChain --cname <BlockChain Name>
+	str := `Usage: main createBlockChain -address <you address> -cname <blockChain name>
+       main addBlock -cname <BlockChain Name>
+       main showBlockChain -cname <BlockChain Name>
 		`
 	fmt.Println(str)
 }

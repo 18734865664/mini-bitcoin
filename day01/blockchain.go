@@ -17,8 +17,8 @@ type BlockChain struct {
 // 生成创世块
 func (obj *BlockChain)GenesisBlock(){
 	str := "first block"
-	err := NewBlock([]byte{}, str, 3, 1, obj.ChainName)
-	if err != nil{
+	err := NewBlock([]byte{}, str, 1, 1, obj.ChainName)
+	if err == nil{
 		log.Println("create first block wrong ")
 	}
 }
@@ -38,7 +38,11 @@ func NewBlockChain(ChainName string)*BlockChain{
 func (obj *BlockChain)GetAllBlockHash(){
 	fmt.Printf("show %s blockchain blocks\n", obj.ChainName)
 	last := GetLastBlockHash(obj.ChainName)
+	if len(last) == 0{
+		return
+	}
 	blk := obj.GetBlock(last)
+	/*
 	blk.ShowBlock()
 	for {
 		if len(blk.PreHash) == 0{
@@ -46,6 +50,16 @@ func (obj *BlockChain)GetAllBlockHash(){
 		}
 		blk = obj.GetBlock(blk.PreHash)
 		blk.ShowBlock()
+	}
+	*/
+	// user iterator
+	iter := BCIter{obj.ChainName, last}
+	for {
+		if blk == nil{
+			break
+		}
+		blk.ShowBlock()
+		blk = iter.Next()
 	}
 	fmt.Println("show all block info seccuss!!! ")
 }
@@ -57,7 +71,7 @@ func GetLastBlockHash(ChainName string)[]byte {
 		log.Println("open blt db wrong: ", err)
 	}
 	lastHashtmp := []byte{}
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket([]byte(ChainName))
 		if bkt == nil{
 			log.Println("this Chain is not exists ", ChainName)
@@ -68,7 +82,11 @@ func GetLastBlockHash(ChainName string)[]byte {
 	})
 	lastHash := make([]byte, len(lastHashtmp), len(lastHashtmp))
 	copy(lastHash, lastHashtmp)
-	return lastHash
+	if err != nil {
+		return []byte{}
+	} else {
+		return lastHash
+	}
 }
 
 
