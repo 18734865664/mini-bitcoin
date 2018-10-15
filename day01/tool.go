@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+
 // 进行类型转换
 func Uint64ToByte(i uint64)[]byte{
 	var buf bytes.Buffer
@@ -18,3 +19,7 @@ func Uint64ToByte(i uint64)[]byte{
 	}
 	return buf.Bytes()
 }
+
+
+
+

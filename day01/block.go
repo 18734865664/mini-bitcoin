@@ -6,6 +6,9 @@ import (
 	"bytes"
 	"math/big"
 	"strings"
+	"github.com/boltdb/bolt"
+	"log"
+	"encoding/gob"
 )
 
 // defind block struct
@@ -27,9 +30,12 @@ type Block struct {
 
 // 挖矿随机数
 	Nonce uint64
+
+// blockName
+	ChainName string
 }
 // get a block obj point
-func NewBlock(prehash []byte,data string, dif,nonce uint64)*Block{
+func NewBlock(prehash []byte,data string, dif,nonce uint64, cName string)error{
 	var blk Block
     blk.PreHash = prehash
 	blk.Data = []byte(data)
@@ -38,15 +44,18 @@ func NewBlock(prehash []byte,data string, dif,nonce uint64)*Block{
 	blk.Timestamp = uint64(time.Now().Unix())
 	blk.Difficulty = uint64(dif)
 	blk.Nonce = nonce
+	blk.ChainName = cName
 	// blk.Hash = blk.SetHash1()
 	blk.Hash = blk.NewPoW().Try()
-	return &blk
+	err := blk.AddBlockToDb()
+	return err
 }
 
 // bitcoin  hash  is SHA256
 func (obj *Block)SetHash()[]byte{
 	h := sha256.New()
 	h.Write(obj.PreHash)
+	h.Write([]byte(obj.ChainName))
 	h.Write([]byte(obj.Data))
 	h.Write(Uint64ToByte(obj.Difficulty))
 	h.Write(Uint64ToByte(obj.Timestamp))
@@ -60,6 +69,7 @@ func (obj *Block)SetHash1()[]byte {
     // 使用bytes.Join 函数
 	blkInfo := [][]byte{
 		obj.PreHash,
+		[]byte(obj.ChainName),
 		[]byte(obj.Data),
 		Uint64ToByte(obj.Difficulty),
 		Uint64ToByte(obj.Timestamp),
@@ -72,11 +82,13 @@ func (obj *Block)SetHash1()[]byte {
 	return  sh[:]
 }
 
+/*
 // 生成创世块
 func GenesisBlock()*Block{
 	str := "first block"
 	return NewBlock([]byte{}, str, 3, 1)
 }
+*/
 
 // new pow obj
 func (obj *Block)NewPoW()*PoW{
@@ -98,4 +110,52 @@ func (obj *Block)NewPoW()*PoW{
     var temp big.Int
 	pow.target , _ = temp.SetString(tgtmpstr, 16)
 	return &pow
+}
+
+func (obj *Block)AddBlockToDb()error  {
+	db, err  := bolt.Open("block.db", 0600, nil)
+	if err != nil{
+		log.Println("block.go 108: ", err)
+		return err
+	}
+	defer db.Close()
+	//lastHashTmp := []byte{}
+	err = db.Update(func(tx *bolt.Tx) error {
+		blk := tx.Bucket([]byte(obj.ChainName))
+		if blk == nil{
+			blk, err = tx.CreateBucket([]byte(obj.ChainName))
+			if err != nil{
+				return err
+			}
+		}
+		err = blk.Put([]byte(obj.Hash), obj.ToHash())
+		err = blk.Put([]byte("lastHash"), obj.Hash)
+		//lastHashTmp = blk.Get([]byte(obj.ChainName))
+		return nil
+	})
+	//lastHash := make([]byte, len(lastHashTmp), len(lastHashTmp))
+	//copy(lastHash, lastHashTmp)
+	//obj1 := Dec(lastHash)
+	//fmt.Println("obj unmarshal", obj1)
+	return err
+}
+
+func (obj *Block)ToHash()[]byte  {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(obj)
+	if err != nil{
+		log.Println("ToHash ", err)
+		return nil
+	}
+	return buf.Bytes()
+}
+
+func Dec(blockInfo []byte) *Block {
+	blk := new(Block)
+	var buf bytes.Buffer
+	dec := gob.NewDecoder(&buf)
+	buf.Write(blockInfo)
+	dec.Decode(blk)
+	return blk
 }
