@@ -5,6 +5,7 @@ import (
 	"time"
 	"bytes"
 	"fmt"
+	"math/big"
 )
 
 // defind block struct
@@ -55,6 +56,7 @@ func (obj *Block)SetHash()[]byte{
 }
 
 func (obj *Block)SetHash1()[]byte {
+    // 使用bytes.Join 函数
 	blkInfo := [][]byte{
 		obj.PreHash,
 		[]byte(obj.Data),
@@ -70,8 +72,22 @@ func (obj *Block)SetHash1()[]byte {
 	return  sh[:]
 }
 
+// 生成创世块
 func GenesisBlock()*Block{
 	str := "first block"
 	return NewBlock([]byte{}, str, 10000, 1)
 }
 
+// new pow obj
+func (obj *Block)NewPoW()*PoW{
+     // sha256 转换成16进制是64位， 所以这里的字符串需要64位
+	tgtmp := "0001000000000000000000000000000000000000000000000000000000000000"
+
+	pow := PoW{
+		Blk:obj,
+	}
+
+    // 将目标hash 字符串转换成了big.Int类型，指明了进制为16进制
+	pow.target.SetString(tgtmp, 16)
+	return &pow
+}

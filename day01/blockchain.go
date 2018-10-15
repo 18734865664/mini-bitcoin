@@ -29,6 +29,8 @@ func (obj *BlockChain)AddBlock(data string, dif, nonce uint64)bool{
 	preHash := obj.Blocks[len(obj.Blocks) - 1].Hash
 	blk := NewBlock(preHash, data, dif, nonce)
 	istrue := true
+	// 判断区块中唯一
+    // 比特币系统中不需要，因为比特币系统中并不保存自身的hash
 	for _, v := range obj.Blocks{
 		if hex.EncodeToString(v.Hash) == hex.EncodeToString(blk.Hash){
 			istrue = false
