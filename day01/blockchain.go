@@ -19,6 +19,7 @@ func NewBlockChain()*BlockChain{
 func (obj *BlockChain)GetAllBlockHash(){
 	for i, v := range obj.Blocks{
 		fmt.Println("now height ", i)
+		fmt.Println("now nonce: ", v.Nonce)
 		fmt.Printf("pre block hash: %x\n",v.PreHash)
 		fmt.Printf("this block hash: %x\n",v.Hash)
 	}

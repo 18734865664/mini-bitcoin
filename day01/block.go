@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"time"
 	"bytes"
-	"fmt"
 	"math/big"
+	"strings"
 )
 
 // defind block struct
@@ -38,7 +38,8 @@ func NewBlock(prehash []byte,data string, dif,nonce uint64)*Block{
 	blk.Timestamp = uint64(time.Now().Unix())
 	blk.Difficulty = uint64(dif)
 	blk.Nonce = nonce
-	blk.Hash = blk.SetHash1()
+	// blk.Hash = blk.SetHash1()
+	blk.Hash = blk.NewPoW().Try()
 	return &blk
 }
 
@@ -67,7 +68,6 @@ func (obj *Block)SetHash1()[]byte {
 		obj.MerkelRoot,
 	}
 	tmp := bytes.Join(blkInfo, []byte{})
-	fmt.Printf("%x\n", tmp)
 	sh := sha256.Sum256(tmp)
 	return  sh[:]
 }
@@ -75,19 +75,27 @@ func (obj *Block)SetHash1()[]byte {
 // 生成创世块
 func GenesisBlock()*Block{
 	str := "first block"
-	return NewBlock([]byte{}, str, 10000, 1)
+	return NewBlock([]byte{}, str, 3, 1)
 }
 
 // new pow obj
 func (obj *Block)NewPoW()*PoW{
      // sha256 转换成16进制是64位， 所以这里的字符串需要64位
-	tgtmp := "0001000000000000000000000000000000000000000000000000000000000000"
-
+     //
+     //
+    dif := int(obj.Difficulty)
+    tgtmpstr := strings.Join([]string{
+		strings.Repeat("0", dif),
+		"1",
+		strings.Repeat("0", 64 - dif - 1),
+	},"")
 	pow := PoW{
 		Blk:obj,
 	}
 
+
     // 将目标hash 字符串转换成了big.Int类型，指明了进制为16进制
-	pow.target.SetString(tgtmp, 16)
+    var temp big.Int
+	pow.target , _ = temp.SetString(tgtmpstr, 16)
 	return &pow
 }
