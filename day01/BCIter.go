@@ -15,6 +15,7 @@ type BCIter struct {
 }
 
 
+// 迭代去方法
 func (obj *BCIter)Next() *Block{
 	if len(obj.NowBlock) == 0{
 		return nil

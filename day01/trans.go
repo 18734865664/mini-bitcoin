@@ -8,36 +8,32 @@ import (
 	"fmt"
 )
 
+// 挖矿奖励
 var Reward = 12.5
 
+// 交易结构体定义
 type Tx struct {
-	TxId []byte
-	Inputs []*InPut
-	Outputs []*OutPut
+	TxId []byte     // 交易ID, 这里就是对交易的Hash, 比特币会复杂一些
+	Inputs []*InPut    // 输入集合
+	Outputs []*OutPut   // 输出集合
 }
 
 type InPut struct {
 	TxId []byte
-	VoutIdx int64
-	ScriptSig string
+	VoutIdx int64     // 可用的余额在输入交易中的索引
+	ScriptSig string    // 锁定tag
 }
 
 type OutPut struct {
-	Count float64
-	ScriptPb string
-}
-
-type TXO struct {
-	Count float64
-	TxId []byte
-	BlkIx []byte
-	Idx uint64
+	Count float64        // 输出的额度
+	ScriptPb string      // 解锁tag
 }
 
 func (obj *Tx)SetTxId() {
 	obj.TxId = obj.ToHash()
 }
 
+// 将交易进行序列化, 后获取hash值
 func (obj *Tx)ToHash()[]byte  {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -49,6 +45,7 @@ func (obj *Tx)ToHash()[]byte  {
 	return objHash[:]
 }
 
+// 挖矿的交易
 func CoinBaseTx(address string, data string)*Tx  {
 	if data == ""{
 		data = fmt.Sprintf("reward %s %f\n", address, Reward)
@@ -60,6 +57,7 @@ func CoinBaseTx(address string, data string)*Tx  {
 	return &tx
 }
 
+// 普通交易创建
 func NewTx(ipts []*InPut, change *OutPut, target string)*Tx {
 	tx := &Tx{}
 	tx.Inputs = ipts

@@ -73,6 +73,7 @@ func (obj *Block)SetHash()[]byte{
 	return h.Sum(nil)
 }
 
+// 生成区块hash， 仅仅对区块头进行hash
 func (obj *Block)SetHash1()[]byte {
     // 使用bytes.Join 函数
 	blkInfo := [][]byte{
@@ -119,6 +120,7 @@ func (obj *Block)NewPoW()*PoW{
 	return &pow
 }
 
+// 将区块对象写入数据库
 func (obj *Block)AddBlockToDb()error  {
 	db, err  := bolt.Open("block.db", 0600, nil)
 	if err != nil{
@@ -147,6 +149,7 @@ func (obj *Block)AddBlockToDb()error  {
 	return err
 }
 
+// 将区块对象进行序列化
 func (obj *Block)ToHash()[]byte  {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -158,6 +161,7 @@ func (obj *Block)ToHash()[]byte  {
 	return buf.Bytes()
 }
 
+// 解码block对象
 func Dec(blockInfo []byte) *Block {
 	blk := new(Block)
 	var buf bytes.Buffer
@@ -167,6 +171,7 @@ func Dec(blockInfo []byte) *Block {
 	return blk
 }
 
+// 返回block的信息
 func (obj *Block)ShowBlock()  {
 	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\nblk info: %s\n"
 	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Inputs[0].ScriptSig)
@@ -181,6 +186,8 @@ func (obj *Block)ShowBlock()  {
 	fmt.Println(strings.Repeat("+", 100))
 }
 
+// 返回区块的默克尔根
+// 这里进行了简化，简单将交易的hash 拼接后进行hash
 func (obj *Block)GetMarkerRoot()[]byte  {
 	txs := obj.Txs
 	txsSlis := []byte{}

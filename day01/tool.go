@@ -21,6 +21,7 @@ func Uint64ToByte(i uint64)[]byte{
 	return buf.Bytes()
 }
 
+// 输出帮助信息
 func ShowUsage()  {
 	str := `Usage: main createBlockChain -a <you address> -c <blockChain name>
        main addBlock -c <BlockChain Name> -a <you address>
