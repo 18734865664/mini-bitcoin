@@ -15,9 +15,9 @@ type BlockChain struct {
 }
 
 // 生成创世块
-func (obj *BlockChain)GenesisBlock(){
-	str := "first block"
-	err := NewBlock([]byte{}, str, 1, 1, obj.ChainName)
+func (obj *BlockChain)GenesisBlock(addr string){
+	coinbase := CoinBaseTx(addr, "first block")
+	err := NewBlock([]byte{}, []*Tx{coinbase}, 1, 1, obj.ChainName)
 	if err == nil{
 		log.Println("create first block wrong ")
 	}
@@ -55,11 +55,11 @@ func (obj *BlockChain)GetAllBlockHash(){
 	// user iterator
 	iter := BCIter{obj.ChainName, last}
 	for {
+		blk = iter.Next()
 		if blk == nil{
 			break
 		}
 		blk.ShowBlock()
-		blk = iter.Next()
 	}
 	fmt.Println("show all block info seccuss!!! ")
 }
@@ -91,10 +91,10 @@ func GetLastBlockHash(ChainName string)[]byte {
 
 
 // add block
-func (obj *BlockChain)AddBlock(data string, dif, nonce uint64){
+func (obj *BlockChain)AddBlock(txs []*Tx, dif, nonce uint64){
     // 获取上一个区块的hash
 	preHash := GetLastBlockHash(obj.ChainName)
-	blk := NewBlock(preHash, data, dif, nonce, obj.ChainName)
+	blk := NewBlock(preHash, txs, dif, nonce, obj.ChainName)
 	pw := blk.NewPoW()
 	fmt.Printf("target: %x\nfound Hash: %x\n", pw.target, blk.Hash)
 	/*
