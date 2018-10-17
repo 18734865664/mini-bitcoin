@@ -169,14 +169,21 @@ func Dec(blockInfo []byte) *Block {
 
 func (obj *Block)ShowBlock()  {
 	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\nblk info: %s\n"
-	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Outputs[0].ScriptPb)
-	fmt.Println(strings.Repeat("+", 20))
+	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Inputs[0].ScriptSig)
+	fmt.Println("transfer note: ")
+	fmt.Println(strings.Repeat("-", 100))
+	for _, v := range obj.Txs{
+		for _, opt := range v.Outputs{
+			fmt.Printf("\t--> %s: %f\n", opt.ScriptPb, opt.Count)
+		}
+	}
+	fmt.Println(strings.Repeat("-", 100))
+	fmt.Println(strings.Repeat("+", 100))
 }
 
 func (obj *Block)GetMarkerRoot()[]byte  {
 	txs := obj.Txs
 	txsSlis := []byte{}
-
 	for _, v := range txs{
 		txsSlis = append(txsSlis, v.ToHash()...)
 	}

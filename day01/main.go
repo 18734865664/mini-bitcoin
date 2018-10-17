@@ -6,9 +6,10 @@ import (
 	"os"
 )
 
-var adr = flag.String("address", "", "usage: main  createBlockChain --address <address>")
-var cname = flag.String("cname", "", "usage: main  createBlockChain --address <address>")
-var data = flag.String("data", "", "usage: main  createBlockChain --address <address>")
+var adr = flag.String("a", "", "usage: main  createBlockChain --a <address>")
+var cname = flag.String("c", "", "usage: main  createBlockChain --c <blockChainName>")
+// var data = flag.String("data", "", "usage: main  createBlockChain --address <ad>")
+var target = flag.String("t", "", "usage: main  createBlockChain --t <targetAddr1:count1,targetAddr2:count2...>")
 
 func main() {
 	//blkc := BlockChain{"test1"}
@@ -35,7 +36,7 @@ func main() {
 		}
 
 	case "addBlock":
-		if *data != "" && *cname != "" && *adr != "" {
+		if *cname != "" && *adr != "" {
 			blkc := BlockChain{*cname}
 			// TODO
 			txs := []*Tx{}
@@ -43,14 +44,35 @@ func main() {
 		} else {
 			ShowUsage()
 		}
-	case "showBlockChain":
+	case "showBlockChainBlock":
 		if *cname != "" {
 			blkc := BlockChain{*cname}
 			blkc.GetAllBlockHash()
 		} else {
 			ShowUsage()
 		}
-
+	case "getCountInfo":
+		if *cname != "" && *adr != ""{
+			blkc := BlockChain{*cname}
+			blkc.ShowCountCoin(*adr)
+		} else {
+			ShowUsage()
+		}
+	case "transfer":
+		if *cname != "" && *adr != "" && *target != ""{
+			blkc := BlockChain{*cname}
+			blkc.CreateCommTrans(*adr, *target)
+		} else {
+			ShowUsage()
+		}
+	case "getAddress":
+		if *cname != ""{
+			blkc := BlockChain{*cname}
+			addr := blkc.GetNewAddress()
+			fmt.Printf("newAddress: %x\n", addr)
+		}else{
+			ShowUsage()
+		}
 	default:
 		ShowUsage()
 	}

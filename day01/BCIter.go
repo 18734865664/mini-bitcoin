@@ -14,6 +14,7 @@ type BCIter struct {
 	NowBlock []byte
 }
 
+
 func (obj *BCIter)Next() *Block{
 	if len(obj.NowBlock) == 0{
 		return nil

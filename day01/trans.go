@@ -27,8 +27,14 @@ type OutPut struct {
 	ScriptPb string
 }
 
-func (obj *Tx)SetTxId() {
+type TXO struct {
+	Count float64
+	TxId []byte
+	BlkIx []byte
+	Idx uint64
+}
 
+func (obj *Tx)SetTxId() {
 	obj.TxId = obj.ToHash()
 }
 
@@ -52,5 +58,11 @@ func CoinBaseTx(address string, data string)*Tx  {
 	tx := Tx{[]byte{}, []*InPut{&ipt},[]*OutPut{&opt} }
 	tx.SetTxId()
 	return &tx
+}
+
+func NewTx(ipts []*InPut, change *OutPut, target string)*Tx {
+	tx := &Tx{}
+	tx.Inputs = ipts
+	return tx
 }
 
