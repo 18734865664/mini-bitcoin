@@ -23,7 +23,7 @@ func Uint64ToByte(i uint64)[]byte{
 
 // 输出帮助信息
 func ShowUsage()  {
-	str := `Usage: main createBlockChain -a <you address> -c <blockChain name>
+	str := `Usage: main createBlockChain -c <blockChain name>
        main addBlock -c <BlockChain Name> -a <you address>
        main showBlockChainBlock -c <BlockChain Name>
        main getCountInfo -c <BlockChain Name> -a <you address>

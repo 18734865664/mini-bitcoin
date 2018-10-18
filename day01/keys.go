@@ -55,7 +55,7 @@ func PriToFile(pkey *ecdsa.PrivateKey, fName string)  {
 		Headers:nil,
 		Bytes:pkeyHash,
 	}
-	f,err  := os.Create(fName)
+	f,err  := os.Create("keys/" + fName)
 	if err != nil{
 		fmt.Println("keys 30: ", err)
 		return
@@ -68,7 +68,7 @@ func PriToFile(pkey *ecdsa.PrivateKey, fName string)  {
 }
 
 func GetPriFromFile(addr string)*ecdsa.PrivateKey {
-	f, err := os.Open(addr)
+	f, err := os.Open("keys" + addr)
 	if err != nil{
 		log.Println("keys.go line 70: ", err)
 		return nil

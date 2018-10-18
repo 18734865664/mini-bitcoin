@@ -26,10 +26,11 @@ func main() {
 	}
 	switch args[1] {
 	case "createBlockChain":
-		if *cname != "" && *adr != ""{
+		if *cname != ""{
 			blkc := NewBlockChain("test1")
+			acc := GetNewAccount()
 			if blkc != nil {
-				blkc.GenesisBlock(*adr)
+				blkc.GenesisBlock(acc.Addr)
 				fmt.Println("create Blockchain success")
 			} else {
 				fmt.Println("this blockchain is exists")
