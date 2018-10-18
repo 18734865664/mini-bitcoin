@@ -29,8 +29,10 @@ func ShowUsage()  {
        main getCountInfo -c <BlockChain Name> -a <you address>
        main transfer -c <BlockChain Name> -a <you address> -t <targetAddr1:count1,targetAddr2:count2...>
        main getAddress -c <BlockChain Name>
+       main listWallet -c <BlockChain Name>
 		`
 	fmt.Println(str)
+
 }
 
 

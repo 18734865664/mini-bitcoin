@@ -297,11 +297,17 @@ func (obj *BlockChain)GetChangeOutPut(adx string, looseChange float64) *OutPut{
 }
 
 
-// 生成地址值，后续还要优化TODO
-func (obj *BlockChain)GetNewAddress()[]byte {
-
-	act := GetNewAccount()
-	return act.Addr
+// 生成地址值
+func (obj *BlockChain)GetNewAddress()string {
+	acc := GetNewAccount()
+	w := Wallet{}
+	w.WName = obj.ChainName + ".wal"
+	accs := w.GetAllAccount()
+	// 将新生成的地址写入钱包
+	accs[acc.Addr] = acc
+	w.Addrs = accs
+	w.SaveToFile()
+	return acc.Addr
 }
 
 // 返回区块链对象的迭代器, 有一个Next函数，用于返回父区块对象
@@ -350,4 +356,15 @@ func (obj *BlockChain)CreateCommTrans(addr ,target string) *Tx{
 	return tx
 	// txs = append(txs, tx)
 	// obj.AddBlock(txs, 0, 0)
+}
+
+// 显示整个钱包中的地址信息
+func (obj *BlockChain)ShowWallet()  {
+	w := &Wallet{}
+	w.WName = obj.ChainName + ".wal"
+	accs := w.GetAllAccount()
+	fmt.Printf("show %s wallet address: \n\n", obj.ChainName)
+	for k, _ := range accs {
+		fmt.Printf("\taddress: %s\n", k)
+	}
 }

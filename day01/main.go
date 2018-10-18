@@ -13,6 +13,7 @@ var data = flag.String("d", "", "usage: main  createBlockChain --d <message data
 var target = flag.String("t", "", "usage: main  createBlockChain --t <targetAddr1:count1,targetAddr2:count2...>")
 
 func main() {
+
 	//chaTx := make(chan *Tx, 3)
 	//blkc := BlockChain{"test1"}
 	//blkc.GetAllBlockHash()
@@ -83,7 +84,14 @@ func main() {
 		if *cname != ""{
 			blkc := BlockChain{*cname}
 			addr := blkc.GetNewAddress()
-			fmt.Printf("newAddress: %x\n", addr)
+			fmt.Printf("newAddress: %s\n", addr)
+		}else{
+			ShowUsage()
+		}
+	case "listWallet":
+			if *cname != ""{
+			blkc := BlockChain{*cname}
+			blkc.ShowWallet()
 		}else{
 			ShowUsage()
 		}
