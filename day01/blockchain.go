@@ -6,8 +6,6 @@ import (
 	"log"
 	"bytes"
 	"encoding/gob"
-	"time"
-	"crypto/sha256"
 	"strings"
 	"strconv"
 )
@@ -301,8 +299,9 @@ func (obj *BlockChain)GetChangeOutPut(adx string, looseChange float64) *OutPut{
 
 // 生成地址值，后续还要优化TODO
 func (obj *BlockChain)GetNewAddress()[]byte {
-	addr := sha256.Sum256([]byte(time.Now().String()))
-	return addr[:]
+
+	act := GetNewAccount()
+	return act.Addr
 }
 
 // 返回区块链对象的迭代器, 有一个Next函数，用于返回父区块对象
