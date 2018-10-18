@@ -174,7 +174,7 @@ func Dec(blockInfo []byte) *Block {
 // 返回block的信息
 func (obj *Block)ShowBlock()  {
 	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\nblk info: %s\n"
-	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Outputs[0].ScriptPb)
+	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Inputs[0].ScriptSig)
 	fmt.Println(strings.Repeat("-", 50))
 	fmt.Println("transfer note: ")
 	for _, v := range obj.Txs{

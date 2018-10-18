@@ -7,11 +7,13 @@ import (
 )
 
 var adr = flag.String("a", "", "usage: main  createBlockChain --a <address>")
+var miner = flag.String("m", "", "usage: main  createBlockChain --m <address>")
 var cname = flag.String("c", "", "usage: main  createBlockChain --c <blockChainName>")
-// var data = flag.String("data", "", "usage: main  createBlockChain --address <ad>")
+var data = flag.String("d", "", "usage: main  createBlockChain --d <message data>")
 var target = flag.String("t", "", "usage: main  createBlockChain --t <targetAddr1:count1,targetAddr2:count2...>")
 
 func main() {
+	//chaTx := make(chan *Tx, 3)
 	//blkc := BlockChain{"test1"}
 	//blkc.GetAllBlockHash()
 	args := os.Args
@@ -60,8 +62,20 @@ func main() {
 		}
 	case "transfer":
 		if *cname != "" && *adr != "" && *target != ""{
+			if *miner == ""{
+				*miner = *adr
+			}
 			blkc := BlockChain{*cname}
-			blkc.CreateCommTrans(*adr, *target)
+			tx := blkc.CreateCommTrans(*adr, *target)
+			coinBasetx := CoinBaseTx(*miner, *data)
+			txs := []*Tx{}
+			txs = append(txs, coinBasetx)
+			if tx != nil{
+				txs = append(txs, tx)
+			}
+			blkc.AddBlock(txs, 1, 0)
+			//chaTx <- tx
+			//chaTx <- coinBasetx
 		} else {
 			ShowUsage()
 		}

@@ -342,12 +342,13 @@ func (obj *BlockChain)NewTx(adx, target string)*Tx {
 }
 
 // 创建一个普通交易
-func (obj *BlockChain)CreateCommTrans(addr ,target string) {
-	txs := []*Tx{}
+func (obj *BlockChain)CreateCommTrans(addr ,target string) *Tx{
+	// txs := []*Tx{}
 	tx := obj.NewTx(addr, target)
 	if tx == nil{
-		return
+		return nil
 	}
-	txs = append(txs, tx)
-	obj.AddBlock(txs, 0, 0)
+	return tx
+	// txs = append(txs, tx)
+	// obj.AddBlock(txs, 0, 0)
 }

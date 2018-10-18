@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/big"
-	"fmt"
 )
 
 type PoW struct {
@@ -19,9 +18,9 @@ func (obj *PoW)Try()[]byte{
 		tempBig := new(big.Int)
 		tempBig = tempBig.SetBytes(tempHash)
 		result := tempBig.Cmp(obj.target)
-		fmt.Println(nonce)
-		fmt.Println(obj.target)
-		fmt.Println(tempBig)
+		// fmt.Println(nonce)
+		// fmt.Println(obj.target)
+		// fmt.Println(tempBig)
 		if result ==  -1 {
 			break
 		}
