@@ -102,7 +102,27 @@ func (obj *BlockChain)GetLastBlockHash()[]byte {
 func (obj *BlockChain)AddBlock(txs []Tx, dif, nonce uint64){
     // 获取上一个区块的hash
 	preHash := obj.GetLastBlockHash()
-	blk := NewBlock(preHash, txs, dif, nonce, obj.ChainName)
+	fmt.Println()
+	txsTmp := []Tx{}
+	for _, tx := range txs{
+
+		IPT:
+		for i, ipt := range tx.Inputs{
+			fmt.Println(ipt)
+			if i == 0{
+				txsTmp = append(txsTmp, tx)
+			}else if  ipt.VoutIdx == -1  {
+				txsTmp = append(txsTmp, tx)
+			} else if obj.CheckInputPub(&ipt) {
+				txsTmp = append(txsTmp, tx)
+			}else {
+				log.Printf("%x invalid\n", tx.TxId)
+				continue IPT
+			}
+		}
+	}
+
+	blk := NewBlock(preHash, txsTmp, dif, nonce, obj.ChainName)
 	pw := blk.NewPoW()
 	fmt.Printf("target: %x\nfound Hash: %x\n", pw.target, blk.Hash)
 	/*
@@ -202,7 +222,7 @@ func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]
 			for _, tx := range blk.Txs{
 				// 匹配交易输入集合，将其中输出地址为addr的加入ntxo已使用集合
 				for _, itx := range tx.Inputs{
-					if bytes.Equal(itx.GetPubKeyHash(), GetPubKeyHash(addr)){
+					if itx.VoutIdx != -1 &&  bytes.Equal(itx.GetPubKeyHash(), GetPubKeyHash(addr)){
 						if Iutxs[string(itx.TxId)] != nil{
 							Iutxs[string(itx.TxId)] = append(Iutxs[string(itx.TxId)], itx.VoutIdx)
 						} else {
@@ -339,7 +359,7 @@ func (obj *BlockChain)NewTx(addr, target string)Tx {
 		opt := OutPut{
 			Count:count,
 			//ScriptPb:args[0],
-			PubKeyHash: GetPubKeyHash(target),
+			PubKeyHash: GetPubKeyHash(args[0]),
 		}
 		opts = append(opts, opt)
 	}
@@ -388,6 +408,6 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)bool  {
 			}
 		}
 	}
-	fmt.Println("checkInputPub wrong: %x : %d", ipt.TxId, ipt.VoutIdx)
+	fmt.Printf("checkInputPub wrong: %x : %d\n", ipt.TxId, ipt.VoutIdx)
 	return false
 }
