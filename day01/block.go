@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"github.com/btcsuite/btcutil/base58"
 )
 
 // defind block struct
@@ -179,7 +180,24 @@ func (obj *Block)ShowBlock()  {
 	fmt.Println("transfer note: ")
 	for _, v := range obj.Txs{
 		for _, opt := range v.Outputs{
-			fmt.Printf("\t--> %x: %f\n", opt.PubKeyHash, opt.Count)
+			ripKey := opt.PubKeyHash
+			vByte := []byte{1}
+			pkHash := ripKey[:20]     // 公钥 rip160密文取前20位
+			fPart := []byte{}
+			fPart = append(fPart, vByte...)
+			fPart = append(fPart, pkHash...)
+
+			// second part  sum256加密公钥rip160密文
+			sPart := sha256.Sum256(fPart)
+			// AllPart  拼接整体
+			AllPart := []byte{}
+			AllPart  = append(AllPart, fPart...)
+			AllPart  = append(AllPart, sPart[:][:4]...)
+
+			// addr := sha256.Sum256([]byte(time.Now().String()))
+			// 使用base58编码，TODO
+			b58 := base58.Encode(AllPart)
+			fmt.Printf("\t--> %s: %f\n", b58, opt.Count)
 		}
 	}
 	fmt.Println(strings.Repeat("-", 50))

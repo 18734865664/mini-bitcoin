@@ -103,21 +103,34 @@ func (obj *BlockChain)AddBlock(txs []Tx, dif, nonce uint64){
     // 获取上一个区块的hash
 	preHash := obj.GetLastBlockHash()
 	fmt.Println()
+// 创建一个临时切片，然后判断各个交易的输入是否合法，不合法则忽略
 	txsTmp := []Tx{}
-	for _, tx := range txs{
-
-		IPT:
-		for i, ipt := range tx.Inputs{
-			fmt.Println(ipt)
-			if i == 0{
+	for txi, tx := range txs{
+		count := 0.0
+		request := 0.0
+		istrue := true
+		for _, opt := range tx.Outputs{
+			request += opt.Count
+		}
+		for _, ipt := range tx.Inputs{
+			// 第一个交易时系统发放奖励的交易，所以无需校验，ps: 校验会报错
+			// 如果VoutItx == -1 表明该笔输入的来源时系统奖励,ps： 由于没有公钥和签名，走校验流程会报错
+			if txi != 0 && ipt.VoutIdx != -1 {
+				ist, c := obj.CheckInputPub(&ipt)
+				if ist {
+					count += c
+				} else {
+					ist = false
+					log.Printf("%x invalid\n", tx.TxId)
+					break
+				}
+			}
+		}
+		if txi == 0 {
+			txsTmp = append(txsTmp, tx)
+		} else if istrue{
+			if count >= request {
 				txsTmp = append(txsTmp, tx)
-			}else if  ipt.VoutIdx == -1  {
-				txsTmp = append(txsTmp, tx)
-			} else if obj.CheckInputPub(&ipt) {
-				txsTmp = append(txsTmp, tx)
-			}else {
-				log.Printf("%x invalid\n", tx.TxId)
-				continue IPT
 			}
 		}
 	}
@@ -305,7 +318,7 @@ func (obj *BlockChain)FindProperUtxo(addr string,PriKey *ecdsa.PrivateKey, reque
 				//ScriptSig:adx,
 				PubKey:PubKey,
 			}
-			input.SignInfo = input.SignInfo
+			input.SignInfo = input.Sign()
 			ipt = append(ipt, input)
 		}
 	}
@@ -393,21 +406,27 @@ func (obj *BlockChain)ShowWallet()  {
 	}
 }
 
-func (obj *BlockChain)CheckInputPub(ipt *InPut)bool  {
+// 校验交易的输入, 如果通过，将输入的金额返回
+func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
+	// 通过输入结构中的公钥，获取地址	
 	addr := GetAddress(ipt.PubKey)
-	idxs, _ := obj.GetAllUTXO(addr)
-	if idxs[addr] != nil{
-		for _, v := range idxs[addr]{
+	// 获取该地址对应的UTXO集合
+	idxs, idxcs := obj.GetAllUTXO(addr)
+	// 如果地址无交易记录，则返回false
+	if idxs[string(ipt.TxId)] != nil{
+		for i, v := range idxs[string(ipt.TxId)]{
+			// 判断输入中的 VoutIdx关键字，无匹配记录则表明该笔输入非法，返回false
 			if ipt.VoutIdx == v{
+				// 到了这里，说明输入 跟公钥匹配无误，对签名进行判断即可
 				isSign := ipt.Verify()
 				if isSign {
-					return true
+					return true, idxcs[string(ipt.TxId)][i]
 				}
-				fmt.Printf("this Input is tampered: %x -- %d", ipt.TxId, ipt.VoutIdx)
-				return false
+				fmt.Printf("this Input is tampered: %x -- %d\n", ipt.TxId, ipt.VoutIdx)
+				return false, 0.0
 			}
 		}
 	}
 	fmt.Printf("checkInputPub wrong: %x : %d\n", ipt.TxId, ipt.VoutIdx)
-	return false
+	return false,  0.0
 }

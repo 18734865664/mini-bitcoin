@@ -114,7 +114,7 @@ func (obj *InPut)Sign()[]byte {
 }
 
 func (obj *InPut)Verify()bool {
-	signTemp := obj.Sign()
+	signTemp := obj.ToHash()
 	istrue := EccVerify(&obj.PubKey, signTemp, obj.SignInfo)
 	return istrue
 }
