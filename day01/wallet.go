@@ -20,8 +20,8 @@ func init()  {
 }
 
 type account struct {
-	PriKey *ecdsa.PrivateKey
-	PubKey *ecdsa.PublicKey
+	PriKey ecdsa.PrivateKey
+	PubKey ecdsa.PublicKey
 	Addr string
 }
 
@@ -29,6 +29,8 @@ type Wallet struct {
 	Addrs map[string]*account
 	WName string
 }
+
+
 
 func GetNewAccount()*account  {
 	// publickey rip160 hash
@@ -60,10 +62,11 @@ func GetNewAccount()*account  {
 	// 使用base58编码，TODO
 
 	act := account{
-		PriKey: pkey,
-		PubKey: &pkey.PublicKey,
+		PriKey: *pkey,
+		PubKey: pkey.PublicKey,
 		Addr: base58.Encode(AllPart),
 	}
+	PriToFile(pkey, act.Addr)
 	return &act
 }
 

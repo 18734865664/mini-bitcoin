@@ -44,8 +44,12 @@ func RsaVerify(pub *rsa.PublicKey,hashed []byte, sig []byte)  bool{
 	return true
 }
 
-func PriToFile(pkey *rsa.PrivateKey, fName string)  {
-	pkeyHash := x509.MarshalPKCS1PrivateKey(pkey)
+func PriToFile(pkey *ecdsa.PrivateKey, fName string)  {
+	pkeyHash,err := x509.MarshalECPrivateKey(pkey)
+	if err != nil{
+		log.Fatal("<PriTOFile> keys.go line 52: ", err)
+		return
+	}
 	block := pem.Block{
 		Type: "pravate key",
 		Headers:nil,
@@ -61,6 +65,30 @@ func PriToFile(pkey *rsa.PrivateKey, fName string)  {
 		fmt.Println("pem encode wrong ", err )
 		return
 	}
+}
+
+func GetPriFromFile(addr string)*ecdsa.PrivateKey {
+	f, err := os.Open(addr)
+	if err != nil{
+		log.Println("keys.go line 70: ", err)
+		return nil
+	}
+	buf := make([]byte, 4 * 1024)
+	pByte := []byte{}
+	for {
+		n, err := f.Read(buf)
+		pByte = append(pByte, buf[:n]...)
+		if err != nil{
+			break
+		}
+	}
+	block, _ := pem.Decode(pByte)
+	priKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil{
+		log.Println("<GetPriFromFile> keys.go line 90: ", err)
+		return nil
+	}
+	return priKey
 }
 
 func GetEccPrivateKey()*ecdsa.PrivateKey {
@@ -95,4 +123,11 @@ func EccVerify(pub *ecdsa.PublicKey, hash []byte, signInfo []byte) bool {
 	return istrue
 }
 
+func PubKey()  {
+	
+}
+
+func DecSignGetPubKey()  {
+	
+}
 

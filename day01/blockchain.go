@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"strings"
 	"strconv"
+	"crypto/ecdsa"
 )
 
 
@@ -19,7 +20,7 @@ type BlockChain struct {
 // 生成创世块
 func (obj *BlockChain)GenesisBlock(addr string){
 	coinbase := CoinBaseTx(addr, "first block")
-	err := NewBlock([]byte{}, []*Tx{coinbase}, 1, 1, obj.ChainName)
+	err := NewBlock([]byte{}, []Tx{coinbase}, 1, 1, obj.ChainName)
 	if err == nil{
 		log.Println("create first block wrong ")
 	}
@@ -98,7 +99,7 @@ func (obj *BlockChain)GetLastBlockHash()[]byte {
 
 
 // add block
-func (obj *BlockChain)AddBlock(txs []*Tx, dif, nonce uint64){
+func (obj *BlockChain)AddBlock(txs []Tx, dif, nonce uint64){
     // 获取上一个区块的hash
 	preHash := obj.GetLastBlockHash()
 	blk := NewBlock(preHash, txs, dif, nonce, obj.ChainName)
@@ -181,7 +182,7 @@ func CheckRepeat(cName string) bool {
 }
 
 // 遍历账本，返回utxo的count 和 在交易中的idx  map，以交易ID作为key
-func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]float64){
+func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]float64){
 	Iutxs := map[string][]int64{}
 	OutRemark :=  map[string][]float64{}
 	OutxsMap :=  map[string][]int64{}
@@ -195,13 +196,13 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 		if blk == nil{
 			break
 		}
-		if adx == "" {
+		if addr == "" {
 			return nil, nil
 		} else {
 			for _, tx := range blk.Txs{
-				// 匹配交易输入集合，将其中输出地址为adx的加入ntxo已使用集合
+				// 匹配交易输入集合，将其中输出地址为addr的加入ntxo已使用集合
 				for _, itx := range tx.Inputs{
-					if itx.ScriptSig == adx{
+					if bytes.Equal(itx.GetPubKeyHash(), GetPubKeyHash(addr)){
 						if Iutxs[string(itx.TxId)] != nil{
 							Iutxs[string(itx.TxId)] = append(Iutxs[string(itx.TxId)], itx.VoutIdx)
 						} else {
@@ -209,10 +210,10 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 						}
 					}
 				}
-				// 匹配交易输出集合，将其中输出地址为adx的加入总的ntxo集合
+				// 匹配交易输出集合，将其中输出地址为addr的加入总的ntxo集合
 				OUTPUT:
 				for idx, otx := range tx.Outputs{
-					if otx.ScriptPb == adx {
+					if bytes.Equal(otx.PubKeyHash,GetPubKeyHash(addr)) {
 						if Iutxs[string(tx.TxId)] == nil{
 							for _, v := range Iutxs[string(tx.TxId)]{
 								if v == int64(idx){
@@ -242,7 +243,7 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 }
 
 // 返回账户总余额
-func (obj *BlockChain)GetCountCoin(adx string, outCount map[string][]float64)float64{
+func (obj *BlockChain)GetCountCoin(addr string, outCount map[string][]float64)float64{
 	count := 0.0
 	for _, otx := range outCount{
 		for _, c := range otx{
@@ -253,46 +254,50 @@ func (obj *BlockChain)GetCountCoin(adx string, outCount map[string][]float64)flo
 }
 
 // 输出账户信息
-func (obj *BlockChain)ShowCountCoin(adx string) {
-	_, outCount := obj.GetAllUTXO(adx)
-	count := obj.GetCountCoin(adx, outCount)
-	fmt.Printf("BlockChain:\t%s\naddress:\t%s\ncount:\t\t%f\n", obj.ChainName, adx, count)
+func (obj *BlockChain)ShowCountCoin(addr string) {
+	_, outCount := obj.GetAllUTXO(addr)
+	count := obj.GetCountCoin(addr, outCount)
+	fmt.Printf("BlockChain:\t%s\naddress:\t%s\ncount:\t\t%f\n", obj.ChainName, addr, count)
 }
 
 // 创建交易时，返回合适的Input集合
-func (obj *BlockChain)FindProperUtxo(adx string, request float64)([]*InPut,float64){
-	ipt := []*InPut{}
-	utxos, outCount := obj.GetAllUTXO(adx)
-	count := obj.GetCountCoin(adx, outCount)
+func (obj *BlockChain)FindProperUtxo(addr string,PriKey *ecdsa.PrivateKey, request float64)([]InPut,float64){
+	ipt := []InPut{}
+	utxos, outCount := obj.GetAllUTXO(addr)
+	count := obj.GetCountCoin(addr, outCount)
+	PubKey := PriKey.PublicKey
 	counttmp := 0.0
 // 使用的逻辑很简单，总的Input coin 总量大于等于 需求的coin
 	if request > count {
 		log.Println("request is larger than count")
-		return []*InPut{}, 0.0
+		return []InPut{}, 0.0
 	}
-	_, utxoRemarks := obj.GetAllUTXO(adx)
+	_, utxoRemarks := obj.GetAllUTXO(addr)
 	for id, cs := range utxoRemarks{
 		if counttmp >=  request{
 			break
 		}
 		for idx, c := range cs{
 			counttmp += c
-			ipt = append(ipt, &InPut{
+			input := InPut{
 				TxId:[]byte(id),
 				VoutIdx: utxos[id][idx],
-				ScriptSig:adx,
-			})
+				//ScriptSig:adx,
+				PubKey:PubKey,
+			}
+			input.SignInfo = input.SignInfo
+			ipt = append(ipt, input)
 		}
 	}
 	return ipt, counttmp - request
 }
 
 // 根据余额创建找零交易
-func (obj *BlockChain)GetChangeOutPut(adx string, looseChange float64) *OutPut{
-	opt := &OutPut{}
+func (obj *BlockChain)GetChangeOutPut(addr string, looseChange float64) OutPut{
+	opt := OutPut{}
 	// addr := obj.GetNewAddress()
 	opt.Count = looseChange
-	opt.ScriptPb = string(adx)
+	opt.PubKeyHash = GetPubKeyHash(addr)
 	return opt
 }
 
@@ -319,26 +324,28 @@ func (obj *BlockChain)NewBCIter()*BCIter {
 }
 
 // 创建建议对象
-func (obj *BlockChain)NewTx(adx, target string)*Tx {
-	tx := &Tx{}
-	opts:= []*OutPut{}
+func (obj *BlockChain)NewTx(addr, target string)Tx {
+	tx := Tx{}
+	opts:= []OutPut{}
+	pKey := GetPriFromFile(addr)
+	if pKey  == nil{
+		log.Fatal("<NewTx> bloclchain.go")
+	}
 	request := 0.0
 	for _, v :=range  strings.Split(target,","){
 		args := strings.Split(v, ":")
 		count, _ := strconv.ParseFloat(args[1], 10)
 		request += count
-		opt := &OutPut{
+		opt := OutPut{
 			Count:count,
-			ScriptPb:args[0],
+			//ScriptPb:args[0],
+			PubKeyHash: GetPubKeyHash(target),
 		}
 		opts = append(opts, opt)
 	}
     // 寻求输入集合，返回零钱值
-	ipts, looseChange := obj.FindProperUtxo(adx, request)
-	if len(ipts) == 0{
-		return nil
-	}
-	opt := obj.GetChangeOutPut(adx, looseChange)
+	ipts, looseChange := obj.FindProperUtxo(addr,pKey, request)
+	opt := obj.GetChangeOutPut(addr, looseChange)
 	opts = append(opts, opt)
 	tx.Outputs = opts
 	tx.Inputs = ipts
@@ -347,12 +354,9 @@ func (obj *BlockChain)NewTx(adx, target string)*Tx {
 }
 
 // 创建一个普通交易
-func (obj *BlockChain)CreateCommTrans(addr ,target string) *Tx{
+func (obj *BlockChain)CreateCommTrans(addr ,target string) Tx{
 	// txs := []*Tx{}
 	tx := obj.NewTx(addr, target)
-	if tx == nil{
-		return nil
-	}
 	return tx
 	// txs = append(txs, tx)
 	// obj.AddBlock(txs, 0, 0)

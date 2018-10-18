@@ -42,7 +42,7 @@ func main() {
 		if *cname != "" && *adr != "" {
 			blkc := BlockChain{*cname}
 			// TODO
-			txs := []*Tx{}
+			txs := []Tx{}
 			blkc.AddBlock(txs, 2, 0)
 		} else {
 			ShowUsage()
@@ -69,9 +69,9 @@ func main() {
 			blkc := BlockChain{*cname}
 			tx := blkc.CreateCommTrans(*adr, *target)
 			coinBasetx := CoinBaseTx(*miner, *data)
-			txs := []*Tx{}
+			txs := []Tx{}
 			txs = append(txs, coinBasetx)
-			if tx != nil{
+			if len(tx.Inputs) != 0{
 				txs = append(txs, tx)
 			}
 			blkc.AddBlock(txs, 1, 0)

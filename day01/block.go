@@ -20,7 +20,7 @@ type Block struct {
 // 正常比特币区块中没有区块的HASH，这里是为了方便操作作弊
 	Hash []byte
 
-	Txs []*Tx
+	Txs []Tx
 	// Data []byte
 
 	Version uint64
@@ -39,7 +39,7 @@ type Block struct {
 	ChainName string
 }
 // get a block obj point
-func NewBlock(prehash []byte,txs []*Tx, dif,nonce uint64, cName string)*Block{
+func NewBlock(prehash []byte,txs []Tx, dif,nonce uint64, cName string)*Block{
 	var blk Block
     blk.PreHash = prehash
 	// blk.Data = []byte(data)
@@ -174,12 +174,12 @@ func Dec(blockInfo []byte) *Block {
 // 返回block的信息
 func (obj *Block)ShowBlock()  {
 	str := "blk Hash: %x\nblk Nonce: %s\nblk PreHash: %x\nblk info: %s\n"
-	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Inputs[0].ScriptSig)
+	fmt.Printf(str, obj.Hash, strconv.Itoa(int(obj.Nonce)), obj.PreHash, obj.Txs[0].Inputs[0].SignInfo)
 	fmt.Println(strings.Repeat("-", 50))
 	fmt.Println("transfer note: ")
 	for _, v := range obj.Txs{
 		for _, opt := range v.Outputs{
-			fmt.Printf("\t--> %s: %f\n", opt.ScriptPb, opt.Count)
+			fmt.Printf("\t--> %s: %f\n", opt.PubKeyHash, opt.Count)
 		}
 	}
 	fmt.Println(strings.Repeat("-", 50))
