@@ -184,7 +184,7 @@ func CheckRepeat(cName string) bool {
 
 // 遍历账本，返回utxo的count 和 在交易中的idx  map，以交易ID作为key
 func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]float64){
-	Iutxs := []string{}
+	Iutxs := map[string][]int64{}
 	OutRemark :=  map[string][]float64{}
 	OutxsMap :=  map[string][]int64{}
 
@@ -204,19 +204,32 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 				// 匹配交易输入集合，将其中输出地址为adx的加入ntxo已使用集合
 				for _, itx := range tx.Inputs{
 					if itx.ScriptSig == adx{
-						Iutxs = append(Iutxs, string(itx.TxId))
+						if Iutxs[string(itx.TxId)] != nil{
+							Iutxs[string(itx.TxId)] = append(Iutxs[string(itx.TxId)], itx.VoutIdx)
+						} else {
+							Iutxs[string(itx.TxId)] = []int64{itx.VoutIdx}
+						}
 					}
 				}
 				// 匹配交易输出集合，将其中输出地址为adx的加入总的ntxo集合
+				OUTPUT:
 				for idx, otx := range tx.Outputs{
-					if otx.ScriptPb == adx{
-						OutxsMap[string(tx.TxId)] = append(OutxsMap[string(tx.TxId)], int64(idx))
-						OutRemark[string(tx.TxId)] = append(OutRemark[string(tx.TxId)], otx.Count)
+					if otx.ScriptPb == adx {
+						if Iutxs[string(tx.TxId)] == nil{
+							for _, v := range Iutxs[string(tx.TxId)]{
+								if v == int64(idx){
+									continue OUTPUT
+								}
+							}
+							OutxsMap[string(tx.TxId)] = append(OutxsMap[string(tx.TxId)], int64(idx))
+							OutRemark[string(tx.TxId)] = append(OutRemark[string(tx.TxId)], otx.Count)
+						}
 					}
 				}
 			}
 		}
 	}
+	/*
     // 遍历已使用ntxo集合，将其从总集合总去掉
 	for _, itx := range Iutxs {
 		if OutxsMap[itx] != nil{
@@ -224,6 +237,7 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 			delete(OutRemark, itx)
 		}
 	}
+	*/
 	return OutxsMap, OutRemark
 }
 
