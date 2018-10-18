@@ -30,12 +30,7 @@ type Wallet struct {
 	WName string
 }
 
-
-
-func GetNewAccount()*account  {
-	// publickey rip160 hash
-    // 获取私钥信息
-	pkey := GetEccPrivateKey()
+func GetAddress(pkey ecdsa.PublicKey)string  {
 	pkeyHash := []byte{}
     // 查看公钥源码，公钥中有三部分，其中椭圆曲线相当于常量，所以我们只传输X,Y两个点
 	pkeyHash = append(pkeyHash, pkey.X.Bytes()...)//
@@ -60,11 +55,22 @@ func GetNewAccount()*account  {
 
 	// addr := sha256.Sum256([]byte(time.Now().String()))
 	// 使用base58编码，TODO
+	b58 := base58.Encode(AllPart)
+	return b58
+
+}
+
+
+func GetNewAccount()*account  {
+	// publickey rip160 hash
+    // 获取私钥信息
+	pkey := GetEccPrivateKey()
+	b58 := GetAddress(pkey.PublicKey)
 
 	act := account{
 		PriKey: *pkey,
 		PubKey: pkey.PublicKey,
-		Addr: base58.Encode(AllPart),
+		Addr: b58,
 	}
 	PriToFile(pkey, act.Addr)
 	return &act

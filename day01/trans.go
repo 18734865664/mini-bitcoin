@@ -102,7 +102,20 @@ func (obj *InPut)ToHash()[]byte {
 	return buf.Bytes()
 }
 
-func (obj *InPut)Sign(Addr string)[]byte {
-	signInfo := EccSign(GetPriFromFile(Addr), obj.ToHash())
+func (obj *InPut)Sign()[]byte {
+	addr := GetAddress(obj.PubKey)
+	objtmp := InPut{
+		TxId:obj.TxId,
+		VoutIdx:obj.VoutIdx,
+		PubKey:obj.PubKey,
+	}
+	signInfo := EccSign(GetPriFromFile(addr), objtmp.ToHash())
 	return signInfo
 }
+
+func (obj *InPut)Verify()bool {
+	signTemp := obj.Sign()
+	istrue := EccVerify(&obj.PubKey, signTemp, obj.SignInfo)
+	return istrue
+}
+

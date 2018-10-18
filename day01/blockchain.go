@@ -372,3 +372,22 @@ func (obj *BlockChain)ShowWallet()  {
 		fmt.Printf("\taddress: %s\n", k)
 	}
 }
+
+func (obj *BlockChain)CheckInputPub(ipt *InPut)bool  {
+	addr := GetAddress(ipt.PubKey)
+	idxs, _ := obj.GetAllUTXO(addr)
+	if idxs[addr] != nil{
+		for _, v := range idxs[addr]{
+			if ipt.VoutIdx == v{
+				isSign := ipt.Verify()
+				if isSign {
+					return true
+				}
+				fmt.Printf("this Input is tampered: %x -- %d", ipt.TxId, ipt.VoutIdx)
+				return false
+			}
+		}
+	}
+	fmt.Println("checkInputPub wrong: %x : %d", ipt.TxId, ipt.VoutIdx)
+	return false
+}
