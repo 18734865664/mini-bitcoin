@@ -218,6 +218,7 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 						if Iutxs[string(tx.TxId)] == nil{
 							for _, v := range Iutxs[string(tx.TxId)]{
 								if v == int64(idx){
+									// 如果判断出输出已经被消费，则跳过后续操作
 									continue OUTPUT
 								}
 							}
@@ -229,7 +230,8 @@ func (obj *BlockChain)GetAllUTXO(adx string) (map[string][]int64, map[string][]f
 			}
 		}
 	}
-	/*
+	/*  这种方式多一次遍历，会更麻烦
+		之前对utxo理解有误,交易的单个输出是utxo的单位，而不是交易
     // 遍历已使用ntxo集合，将其从总集合总去掉
 	for _, itx := range Iutxs {
 		if OutxsMap[itx] != nil{
@@ -328,6 +330,9 @@ func (obj *BlockChain)NewTx(adx, target string)*Tx {
 	}
     // 寻求输入集合，返回零钱值
 	ipts, looseChange := obj.FindProperUtxo(adx, request)
+	if len(ipts) == 0{
+		return nil
+	}
 	opt := obj.GetChangeOutPut(adx, looseChange)
 	opts = append(opts, opt)
 	tx.Outputs = opts
@@ -340,6 +345,9 @@ func (obj *BlockChain)NewTx(adx, target string)*Tx {
 func (obj *BlockChain)CreateCommTrans(addr ,target string) {
 	txs := []*Tx{}
 	tx := obj.NewTx(addr, target)
+	if tx == nil{
+		return
+	}
 	txs = append(txs, tx)
 	obj.AddBlock(txs, 0, 0)
 }
