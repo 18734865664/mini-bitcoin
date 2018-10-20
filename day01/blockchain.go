@@ -101,6 +101,7 @@ func (obj *BlockChain)GetLastBlockHash()[]byte {
 
 // add block
 func (obj *BlockChain)AddBlock(txs []Tx, dif, nonce uint64){
+	oneBlockInput = map[string][]int64{}
     // 获取上一个区块的hash
 	preHash := obj.GetLastBlockHash()
 // 创建一个临时切片，然后判断各个交易的输入是否合法，不合法则忽略
@@ -265,12 +266,10 @@ func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]
 							}
 						}
 						OutxsMap[string(tx.TxId)] = append(OutxsMap[string(tx.TxId)], int64(idx))
-						fmt.Println("idx: ", idx)
 						OutRemark[string(tx.TxId)] = append(OutRemark[string(tx.TxId)], otx.Count)
 					}
 				}
 			}
-			fmt.Println("-------------------------------")
 		}
 	}
 	/*  这种方式多一次遍历，会更麻烦
@@ -433,7 +432,6 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 	} else {
 		oneBlockInput[string(ipt.TxId)] = []int64{ipt.VoutIdx}
 	}
-	fmt.Println("blockchain.go 434: ", idxs)
 	// 如果地址无交易记录，则返回false
 	if idxs[string(ipt.TxId)] != nil{
 		for i, v := range idxs[string(ipt.TxId)]{
