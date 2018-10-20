@@ -77,10 +77,10 @@ func GetPubKeyHash(addr string)[]byte {
 	return PubHash
 }
 
-func (obj *InPut)GetPubKeyHash()[]byte {
+func PubKeyToHash(PubKey *ecdsa.PublicKey)[]byte {
 	pubKeyHash := []byte{}
-	pubKeyHash = append(pubKeyHash, obj.PubKey.X.Bytes()...)
-	pubKeyHash = append(pubKeyHash, obj.PubKey.Y.Bytes()...)
+	pubKeyHash = append(pubKeyHash, PubKey.X.Bytes()...)
+	pubKeyHash = append(pubKeyHash, PubKey.Y.Bytes()...)
 	rip := ripemd160.New()
 	_, err := rip.Write(pubKeyHash)
 	if err !=nil{
@@ -103,20 +103,31 @@ func (obj *InPut)ToHash()[]byte {
 	return buf.Bytes()
 }
 
-func (obj *InPut)Sign()[]byte {
-	addr := GetAddress(obj.PubKey)
-	objtmp := InPut{
-		TxId:obj.TxId,
-		VoutIdx:obj.VoutIdx,
-		PubKey:obj.PubKey,
+type SignInfo struct {
+	FromAddr string
+	ToAddr string
+	Count float64
+}
+
+func (obj *SignInfo)ToHash()[]byte  {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(obj)
+	if err != nil{
+		log.Println("<ToHash> trans.go: ", err)
+		return []byte{}
 	}
-	signInfo := EccSign(GetPriFromFile(addr), objtmp.ToHash())
+	return buf.Bytes()
+}
+
+func Sign(pubKey *ecdsa.PublicKey, signdata []byte )[]byte {
+	addr := GetAddress(pubKey)
+	signInfo := EccSign(GetPriFromFile(addr), signdata)
 	return signInfo
 }
 
-func (obj *InPut)Verify()bool {
-	signTemp := obj.ToHash()
-	istrue := EccVerify(&obj.PubKey, signTemp, obj.SignInfo)
+func Verify(ipt *InPut, signData []byte)bool {
+	istrue := EccVerify(&ipt.PubKey, signData, ipt.SignInfo)
 	return istrue
 }
 

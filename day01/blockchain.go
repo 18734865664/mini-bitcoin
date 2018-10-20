@@ -17,6 +17,7 @@ var oneBlockInput = map[string][]int64{}
 
 type BlockChain struct {
 	ChainName string
+	Txs map[string]*Tx
 	// Blocks []*Block
 }
 
@@ -217,12 +218,8 @@ func CheckRepeat(cName string) bool {
 	}
 }
 
-// 遍历账本，返回utxo的count 和 在交易中的idx  map，以交易ID作为key
-func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]float64){
-	Iutxs := map[string][]int64{}
-	OutRemark :=  map[string][]float64{}
-	OutxsMap :=  map[string][]int64{}
-
+func (obj *BlockChain) SetAllTx(){
+	txs := map[string]*Tx{}
 	last := obj.GetLastBlockHash()
 	iter := obj.NewBCIter()
 	iter.NowBlock = last
@@ -232,48 +229,57 @@ func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]
 		if blk == nil{
 			break
 		}
-		if addr == "" {
-			return nil, nil
-		} else {
-			for _, tx := range blk.Txs{
-				// 匹配交易输入集合，将其中输出地址为addr的加入ntxo已使用集合
-				for _, itx := range tx.Inputs{
-					if itx.VoutIdx != -1 &&  bytes.Equal(itx.GetPubKeyHash(), GetPubKeyHash(addr)){
-						if Iutxs[string(itx.TxId)] != nil{
-							Iutxs[string(itx.TxId)] = append(Iutxs[string(itx.TxId)], itx.VoutIdx)
-						} else {
-							Iutxs[string(itx.TxId)] = []int64{itx.VoutIdx}
-						}
-					}
-				}
-				// 匹配交易输出集合，将其中输出地址为addr的加入总的ntxo集合
-				OUTPUT:
-				for idx, otx := range tx.Outputs{
+		for _, v := range blk.Txs {
+			txs[fmt.Sprintf("%x",v.TxId)] = &v
+		}
+	}
+	obj.Txs = txs
+}
+// 遍历账本，返回utxo的count 和 在交易中的idx  map，以交易ID作为key
+func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]float64){
+	Iutxs := map[string][]int64{}
+	OutRemark :=  map[string][]float64{}
+	OutxsMap :=  map[string][]int64{}
+	txs := obj.Txs
 
-					if bytes.Equal(otx.PubKeyHash,GetPubKeyHash(addr)) {
-						if Iutxs[string(tx.TxId)] != nil{
-							for _, v := range Iutxs[string(tx.TxId)]{
-								if v == int64(idx){
-									// 如果判断出输出已经被消费，则跳过后续操作
-									continue OUTPUT
-								}
-							}
-						}
-						if oneBlockInput[string(tx.TxId)] != nil{
-							for _, v := range oneBlockInput[string(tx.TxId)]{
-								if v == int64(idx){
-									// 如果判断出输出已经被消费，则跳过后续操作
-									continue OUTPUT
-								}
-							}
-						}
-						OutxsMap[string(tx.TxId)] = append(OutxsMap[string(tx.TxId)], int64(idx))
-						OutRemark[string(tx.TxId)] = append(OutRemark[string(tx.TxId)], otx.Count)
-					}
+	for _, tx := range txs{
+		// 匹配交易输入集合，将其中输出地址为addr的加入ntxo已使用集合
+		for _, itx := range tx.Inputs{
+			if itx.VoutIdx != -1 &&  bytes.Equal(PubKeyToHash(&itx.PubKey), GetPubKeyHash(addr)){
+				if Iutxs[fmt.Sprintf("%x", itx.TxId)] != nil{
+					Iutxs[fmt.Sprintf("%x", itx.TxId)] = append(Iutxs[fmt.Sprintf("%x", itx.TxId)], itx.VoutIdx)
+				} else {
+					Iutxs[fmt.Sprintf("%x", itx.TxId)] = []int64{itx.VoutIdx}
 				}
 			}
 		}
+		// 匹配交易输出集合，将其中输出地址为addr的加入总的ntxo集合
+		OUTPUT:
+		for idx, otx := range tx.Outputs{
+
+			if bytes.Equal(otx.PubKeyHash,GetPubKeyHash(addr)) {
+				if Iutxs[fmt.Sprintf("%x", tx.TxId)] != nil{
+					for _, v := range Iutxs[fmt.Sprintf("%x", tx.TxId)]{
+						if v == int64(idx){
+							// 如果判断出输出已经被消费，则跳过后续操作
+							continue OUTPUT
+						}
+					}
+				}
+				if oneBlockInput[fmt.Sprintf("%x", tx.TxId)] != nil{
+					for _, v := range oneBlockInput[fmt.Sprintf("%x", tx.TxId)]{
+						if v == int64(idx){
+							// 如果判断出输出已经被消费，则跳过后续操作
+							continue OUTPUT
+						}
+					}
+				}
+				OutxsMap[fmt.Sprintf("%x", tx.TxId)] = append(OutxsMap[fmt.Sprintf("%x", tx.TxId)], int64(idx))
+				OutRemark[fmt.Sprintf("%x", tx.TxId)] = append(OutRemark[fmt.Sprintf("%x", tx.TxId)], otx.Count)
+			}
+		}
 	}
+
 	/*  这种方式多一次遍历，会更麻烦
 		之前对utxo理解有误,交易的单个输出是utxo的单位，而不是交易
     // 遍历已使用ntxo集合，将其从总集合总去掉
@@ -330,7 +336,13 @@ func (obj *BlockChain)FindProperUtxo(addr string,PriKey *ecdsa.PrivateKey, reque
 				//ScriptSig:adx,
 				PubKey:PubKey,
 			}
-			input.SignInfo = input.Sign()
+			signInfo := SignInfo{
+
+				FromAddr: PubKeyHashToAddress(obj.Txs[fmt.Sprintf("%x", id)].Outputs[0].PubKeyHash),
+				ToAddr:addr,
+				Count:c,
+			}
+			input.SignInfo = Sign(&PubKey, signInfo.ToHash())
 			if oneBlockInput[id] == nil{
 				oneBlockInput[id] = []int64{utxos[id][idx]}
 			} else {
@@ -429,27 +441,32 @@ func (obj *BlockChain)ShowWallet()  {
 // 校验交易的输入, 如果通过，将输入的金额返回
 func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 	// 通过输入结构中的公钥，获取地址	
-	addr := GetAddress(ipt.PubKey)
+	addr := GetAddress(&ipt.PubKey)
 	// 获取该地址对应的UTXO集合
 	idxs, idxcs := obj.GetAllUTXO(addr)
-	if oneBlockInput[string(ipt.TxId)] != nil{
-		oneBlockInput[string(ipt.TxId)] = append(oneBlockInput[string(ipt.TxId)])
+	if oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] != nil{
+		oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = append(oneBlockInput[fmt.Sprintf("%x", ipt.TxId)])
 	} else {
-		oneBlockInput[string(ipt.TxId)] = []int64{ipt.VoutIdx}
+		oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = []int64{ipt.VoutIdx}
 	}
 	// 如果地址无交易记录，则返回false
-	if idxs[string(ipt.TxId)] != nil{
-		for i, v := range idxs[string(ipt.TxId)]{
+	if idxs[fmt.Sprintf("%x", ipt.TxId)] != nil{
+		for i, v := range idxs[fmt.Sprintf("%x", ipt.TxId)]{
 			// 判断输入中的 VoutIdx关键字，无匹配记录则表明该笔输入非法，返回false
 			if ipt.VoutIdx == v{
 				// 到了这里，说明输入 跟公钥匹配无误，对签名进行判断即可
-				isSign := ipt.Verify()
-				if isSign {
-					return true, idxcs[string(ipt.TxId)][i]
+				signInfo := SignInfo{
+					FromAddr: PubKeyHashToAddress(obj.Txs[fmt.Sprintf("%x", ipt.TxId)].Outputs[0].PubKeyHash),
+					ToAddr:addr,
+					Count: idxcs[fmt.Sprintf("%x", ipt.TxId)][i],
 				}
-				for rid, rv := range oneBlockInput[string(ipt.TxId)]{
+				isSign := Verify(ipt, signInfo.ToHash())
+				if isSign {
+					return true, idxcs[fmt.Sprintf("%x", ipt.TxId)][i]
+				}
+				for rid, rv := range oneBlockInput[fmt.Sprintf("%x", ipt.TxId)]{
 					if rv == v{
-						oneBlockInput[string(ipt.TxId)] = append(oneBlockInput[string(ipt.TxId)][:rid], oneBlockInput[string(ipt.TxId)][rid + 1 : ]...)
+						oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = append(oneBlockInput[fmt.Sprintf("%x", ipt.TxId)][:rid], oneBlockInput[fmt.Sprintf("%x", ipt.TxId)][rid + 1 : ]...)
 					}
 				}
 				fmt.Printf("this Input is tampered: %x -- %d\n", ipt.TxId, ipt.VoutIdx)
@@ -457,9 +474,9 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 			}
 		}
 	}
-	for rid, rv := range oneBlockInput[string(ipt.TxId)]{
+	for rid, rv := range oneBlockInput[fmt.Sprintf("%x", ipt.TxId)]{
 		if rv == ipt.VoutIdx{
-			oneBlockInput[string(ipt.TxId)] = append(oneBlockInput[string(ipt.TxId)][:rid], oneBlockInput[string(ipt.TxId)][rid + 1 : ]...)
+			oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = append(oneBlockInput[fmt.Sprintf("%x", ipt.TxId)][:rid], oneBlockInput[fmt.Sprintf("%x", ipt.TxId)][rid + 1 : ]...)
 		}
 	}
 	fmt.Printf("checkInputPub wrong: %x : %d\n", ipt.TxId, ipt.VoutIdx)
@@ -483,4 +500,10 @@ func CheckAddress(addr string)bool  {
 		fmt.Printf("address illegal: %s\n", addr)
 		return false
 	}
+}
+
+func GetNewBlockChainObj(cname string)*BlockChain  {
+	obj := &BlockChain{ChainName:cname}
+	obj.SetAllTx()
+	return obj
 }

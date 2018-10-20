@@ -45,7 +45,7 @@ func main() {
 				ShowUsage()
 				return
 			}
-			blkc := BlockChain{*cname}
+			blkc := &BlockChain{ChainName: *cname}
 			// TODO
 			txs := []Tx{}
 			blkc.AddBlock(txs, 2, 0)
@@ -54,7 +54,7 @@ func main() {
 		}
 	case "showBlockChainBlock":
 		if *cname != "" {
-			blkc := BlockChain{*cname}
+			blkc := GetNewBlockChainObj(*cname)
 			blkc.GetAllBlockHash()
 		} else {
 			ShowUsage()
@@ -65,7 +65,7 @@ func main() {
 				ShowUsage()
 				return
 			}
-			blkc := BlockChain{*cname}
+			blkc := GetNewBlockChainObj(*cname)
 			blkc.ShowCountCoin(*adr)
 		} else {
 			ShowUsage()
@@ -79,7 +79,7 @@ func main() {
 				ShowUsage()
 				return
 			}
-			blkc := BlockChain{*cname}
+			blkc := GetNewBlockChainObj(*cname)
 			tx := blkc.CreateCommTrans(*adr, *target)
 			coinBasetx := CoinBaseTx(*miner, *data)
 			txs := []Tx{}
@@ -95,15 +95,15 @@ func main() {
 		}
 	case "getAddress":
 		if *cname != ""{
-			blkc := BlockChain{*cname}
+			blkc := GetNewBlockChainObj(*cname)
 			addr := blkc.GetNewAddress()
 			fmt.Printf("newAddress: %s\n", addr)
 		}else{
 			ShowUsage()
 		}
 	case "listWallet":
-			if *cname != ""{
-			blkc := BlockChain{*cname}
+		if *cname != ""{
+			blkc := GetNewBlockChainObj(*cname)
 			blkc.ShowWallet()
 		}else{
 			ShowUsage()

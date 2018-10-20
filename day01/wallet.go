@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/ecdsa"
 	"crypto/sha256"
-	"golang.org/x/crypto/ripemd160"
 	"os"
 	"fmt"
 	"io"
@@ -30,7 +29,8 @@ type Wallet struct {
 	WName string
 }
 
-func GetAddress(pkey ecdsa.PublicKey)string  {
+func GetAddress(pkey *ecdsa.PublicKey)string  {
+	/*
 	pkeyHash := []byte{}
     // 查看公钥源码，公钥中有三部分，其中椭圆曲线相当于常量，所以我们只传输X,Y两个点
 	pkeyHash = append(pkeyHash, pkey.X.Bytes()...)//
@@ -39,24 +39,10 @@ func GetAddress(pkey ecdsa.PublicKey)string  {
 	rip160.Write(pkeyHash)
 	ripKey := rip160.Sum(nil)
 
-	// first part
-	vByte := []byte{1}
-	pkHash := ripKey[:20]     // 公钥 rip160密文取前20位
-	fPart := []byte{}
-	fPart = append(fPart, vByte...)
-	fPart = append(fPart, pkHash...)
+	*/
+	pkHash := PubKeyToHash(pkey)     // 公钥 rip160密文取前20位
 
-	// second part  sum256加密公钥rip160密文
-	sPart := sha256.Sum256(fPart)
-	// AllPart  拼接整体
-	AllPart := []byte{}
-	AllPart  = append(AllPart, fPart...)
-	AllPart  = append(AllPart, sPart[:][:4]...)
-
-	// addr := sha256.Sum256([]byte(time.Now().String()))
-	// 使用base58编码，TODO
-	b58 := base58.Encode(AllPart)
-	return b58
+	return PubKeyHashToAddress(pkHash)
 
 }
 
@@ -65,7 +51,7 @@ func GetNewAccount()*account  {
 	// publickey rip160 hash
     // 获取私钥信息
 	pkey := GetEccPrivateKey()
-	b58 := GetAddress(pkey.PublicKey)
+	b58 := GetAddress(&pkey.PublicKey)
 
 	act := account{
 		PriKey: *pkey,
@@ -155,4 +141,23 @@ func ToWalletObj(data []byte)*Wallet  {
 	return w
 }
 
+func PubKeyHashToAddress(pubHash []byte)string  {
+	vByte := []byte{1}
+	pkHash := pubHash     // 公钥 rip160密文取前20位
+	fPart := []byte{}
+	fPart = append(fPart, vByte...)
+	fPart = append(fPart, pkHash...)
 
+	// second part  sum256加密公钥rip160密文
+	sPart := sha256.Sum256(fPart)
+	// AllPart  拼接整体
+	AllPart := []byte{}
+	AllPart  = append(AllPart, fPart...)
+	AllPart  = append(AllPart, sPart[:][:4]...)
+
+	// addr := sha256.Sum256([]byte(time.Now().String()))
+	// 使用base58编码，TODO
+	b58 := base58.Encode(AllPart)
+	return b58
+
+}
