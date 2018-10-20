@@ -41,7 +41,7 @@ func main() {
 
 	case "addBlock":
 		if *cname != "" && *adr != "" {
-			if CheckAddress(*adr){
+			if !CheckAddress(*adr){
 				ShowUsage()
 				return
 			}
@@ -60,8 +60,11 @@ func main() {
 			ShowUsage()
 		}
 	case "getCountInfo":
+		fmt.Println("cname: ", *cname)
+		fmt.Println("adr: ", *adr)
 		if *cname != "" && *adr != ""{
-			if CheckAddress(*adr){
+			if !CheckAddress(*adr){
+				fmt.Println("checkaddress error")
 				ShowUsage()
 				return
 			}
@@ -72,16 +75,19 @@ func main() {
 		}
 	case "transfer":
 		if *cname != "" && *adr != "" && *target != ""{
+			var addr string
 			if *miner == ""{
-				*miner = *adr
+				addr = *adr
+			} else {
+				addr = *miner
 			}
-			if CheckAddress(*adr){
+			if !CheckAddress(*adr){
 				ShowUsage()
 				return
 			}
 			blkc := GetNewBlockChainObj(*cname)
 			tx := blkc.CreateCommTrans(*adr, *target)
-			coinBasetx := CoinBaseTx(*miner, *data)
+			coinBasetx := CoinBaseTx(addr, *data)
 			txs := []Tx{}
 			txs = append(txs, coinBasetx)
 			if len(tx.Inputs) != 0{

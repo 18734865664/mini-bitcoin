@@ -11,13 +11,14 @@ import (
 	"crypto/ecdsa"
 	"github.com/btcsuite/btcutil/base58"
 	"crypto/sha256"
+	"encoding/hex"
 )
 
 var oneBlockInput = map[string][]int64{}
 
 type BlockChain struct {
 	ChainName string
-	Txs map[string]*Tx
+	Txs map[string]Tx
 	// Blocks []*Block
 }
 
@@ -219,7 +220,7 @@ func CheckRepeat(cName string) bool {
 }
 
 func (obj *BlockChain) SetAllTx(){
-	txs := map[string]*Tx{}
+	txs := map[string]Tx{}
 	last := obj.GetLastBlockHash()
 	iter := obj.NewBCIter()
 	iter.NowBlock = last
@@ -230,7 +231,7 @@ func (obj *BlockChain) SetAllTx(){
 			break
 		}
 		for _, v := range blk.Txs {
-			txs[fmt.Sprintf("%x",v.TxId)] = &v
+			txs[fmt.Sprintf("%x",v.TxId)] = v
 		}
 	}
 	obj.Txs = txs
@@ -323,22 +324,26 @@ func (obj *BlockChain)FindProperUtxo(addr string,PriKey *ecdsa.PrivateKey, reque
 		log.Println("request is larger than count")
 		return []InPut{}, 0.0
 	}
-	_, utxoRemarks := obj.GetAllUTXO(addr)
-	for id, cs := range utxoRemarks{
+	for id, cs := range outCount{
 		if counttmp >=  request{
 			break
 		}
 		for idx, c := range cs{
 			counttmp += c
+			txid , err := hex.DecodeString(id)
+			if err != nil{
+				fmt.Printf("<FindProperUtxo> blockchain.go ", err)
+			}
 			input := InPut{
-				TxId:[]byte(id),
+				TxId: txid,
 				VoutIdx: utxos[id][idx],
 				//ScriptSig:adx,
 				PubKey:PubKey,
 			}
+
 			signInfo := SignInfo{
 
-				FromAddr: PubKeyHashToAddress(obj.Txs[fmt.Sprintf("%x", id)].Outputs[0].PubKeyHash),
+				FromAddr: PubKeyHashToAddress(obj.Txs[id].Outputs[0].PubKeyHash),
 				ToAddr:addr,
 				Count:c,
 			}
@@ -449,6 +454,7 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 	} else {
 		oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = []int64{ipt.VoutIdx}
 	}
+	fmt.Printf("testId: %x\n",ipt.TxId)
 	// 如果地址无交易记录，则返回false
 	if idxs[fmt.Sprintf("%x", ipt.TxId)] != nil{
 		for i, v := range idxs[fmt.Sprintf("%x", ipt.TxId)]{
