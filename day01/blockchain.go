@@ -9,6 +9,8 @@ import (
 	"strings"
 	"strconv"
 	"crypto/ecdsa"
+	"github.com/btcsuite/btcutil/base58"
+	"crypto/sha256"
 )
 
 var oneBlockInput = map[string][]int64{}
@@ -382,6 +384,9 @@ func (obj *BlockChain)NewTx(addr, target string)Tx {
 	request := 0.0
 	for _, v :=range  strings.Split(target,","){
 		args := strings.Split(v, ":")
+		if !CheckAddress(args[0]){
+			continue
+		}
 		count, _ := strconv.ParseFloat(args[1], 10)
 		request += count
 		opt := OutPut{
@@ -459,4 +464,23 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 	}
 	fmt.Printf("checkInputPub wrong: %x : %d\n", ipt.TxId, ipt.VoutIdx)
 	return false,  0.0
+}
+
+func CheckAddress(addr string)bool  {
+	addrByte := base58.Decode(addr)
+	checkSum := addrByte[len(addrByte) - 4:]
+
+	vHash := []byte{1}
+	pubHash := GetPubKeyHash(addr)
+	cHash := []byte{}
+	cHash = append(cHash, vHash...)
+	cHash = append(cHash, pubHash...)
+	vcHash := sha256.Sum256(cHash)
+	checkSum2 := vcHash[:4]
+	if bytes.Equal(checkSum, checkSum2){
+		return true
+	}else {
+		fmt.Printf("address illegal: %s\n", addr)
+		return false
+	}
 }

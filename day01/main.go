@@ -41,6 +41,10 @@ func main() {
 
 	case "addBlock":
 		if *cname != "" && *adr != "" {
+			if CheckAddress(*adr){
+				ShowUsage()
+				return
+			}
 			blkc := BlockChain{*cname}
 			// TODO
 			txs := []Tx{}
@@ -57,6 +61,10 @@ func main() {
 		}
 	case "getCountInfo":
 		if *cname != "" && *adr != ""{
+			if CheckAddress(*adr){
+				ShowUsage()
+				return
+			}
 			blkc := BlockChain{*cname}
 			blkc.ShowCountCoin(*adr)
 		} else {
@@ -66,6 +74,10 @@ func main() {
 		if *cname != "" && *adr != "" && *target != ""{
 			if *miner == ""{
 				*miner = *adr
+			}
+			if CheckAddress(*adr){
+				ShowUsage()
+				return
 			}
 			blkc := BlockChain{*cname}
 			tx := blkc.CreateCommTrans(*adr, *target)
