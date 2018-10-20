@@ -179,7 +179,7 @@ func (obj *Block)ShowBlock()  {
 	fmt.Println(strings.Repeat("-", 50))
 	fmt.Println("transfer note: ")
 	for _, v := range obj.Txs{
-		for _, opt := range v.Outputs{
+		for _ , opt := range v.Outputs{
 			ripKey := opt.PubKeyHash
 			vByte := []byte{1}
 			pkHash := ripKey[:20]     // 公钥 rip160密文取前20位
@@ -197,7 +197,7 @@ func (obj *Block)ShowBlock()  {
 			// addr := sha256.Sum256([]byte(time.Now().String()))
 			// 使用base58编码，TODO
 			b58 := base58.Encode(AllPart)
-			fmt.Printf("\t--> %s: %f\n", b58, opt.Count)
+			fmt.Printf("\t--> %s: %f\n",b58, opt.Count)
 		}
 	}
 	fmt.Println(strings.Repeat("-", 50))

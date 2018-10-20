@@ -9,6 +9,7 @@ import (
 	"crypto/ecdsa"
 	"golang.org/x/crypto/ripemd160"
 	"github.com/btcsuite/btcutil/base58"
+	"time"
 )
 
 // 挖矿奖励
@@ -56,7 +57,7 @@ func CoinBaseTx(address string, data string)Tx  {
 	if data == ""{
 		data = fmt.Sprintf("reward %s %f\n", address, Reward)
 	}
-	ipt := InPut{nil, -1, ecdsa.PublicKey{}, nil}
+	ipt := InPut{nil, -1, ecdsa.PublicKey{}, []byte(time.Now().Format("2006-01-02 15:04:05"))}
 	opt := OutPut{Reward, GetPubKeyHash(address)}
 	tx := Tx{[]byte{}, []InPut{ipt},[]OutPut{opt} }
 	tx.SetTxId()
