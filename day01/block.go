@@ -179,6 +179,10 @@ func (obj *Block)ShowBlock()  {
 	fmt.Println(strings.Repeat("-", 50))
 	fmt.Println("transfer note: ")
 	for _, v := range obj.Txs{
+		fmt.Printf("txId: %x\n: ", v.TxId)
+		for _, ipt:= range v.Inputs{
+			fmt.Printf("inputId: %x\n", ipt.TxId)
+		}
 		for _ , opt := range v.Outputs{
 			ripKey := opt.PubKeyHash
 			vByte := []byte{1}

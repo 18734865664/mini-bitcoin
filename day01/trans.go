@@ -59,7 +59,7 @@ func CoinBaseTx(address string, data string)Tx  {
 	}
 	ipt := InPut{nil, -1, ecdsa.PublicKey{}, []byte(time.Now().Format("2006-01-02 15:04:05"))}
 	opt := OutPut{Reward, GetPubKeyHash(address)}
-	tx := Tx{[]byte{}, []InPut{ipt},[]OutPut{opt} }
+	tx := Tx{[]byte("helloworld"), []InPut{ipt},[]OutPut{opt} }
 	tx.SetTxId()
 	return tx
 }
@@ -79,16 +79,16 @@ func GetPubKeyHash(addr string)[]byte {
 
 func (obj *InPut)GetPubKeyHash()[]byte {
 	pubKeyHash := []byte{}
-	pubKeyByte := []byte{}
-	pubKeyHash = append(pubKeyByte, obj.PubKey.X.Bytes()...)
-	pubKeyHash = append(pubKeyByte, obj.PubKey.Y.Bytes()...)
+	pubKeyHash = append(pubKeyHash, obj.PubKey.X.Bytes()...)
+	pubKeyHash = append(pubKeyHash, obj.PubKey.Y.Bytes()...)
 	rip := ripemd160.New()
 	_, err := rip.Write(pubKeyHash)
 	if err !=nil{
 		log.Println("trans.go line 80: ", err)
 		return nil
 	}
-	pubKeyHash = rip.Sum(nil)
+	ripHash := rip.Sum(nil)
+	pubKeyHash = ripHash[:20]
 	return pubKeyHash
 }
 
