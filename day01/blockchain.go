@@ -238,6 +238,7 @@ func (obj *BlockChain) SetAllTx(){
 }
 // 遍历账本，返回utxo的count 和 在交易中的idx  map，以交易ID作为key
 func (obj *BlockChain)GetAllUTXO(addr string) (map[string][]int64, map[string][]float64){
+	obj.SetAllTx()
 	Iutxs := map[string][]int64{}
 	OutRemark :=  map[string][]float64{}
 	OutxsMap :=  map[string][]int64{}
@@ -454,7 +455,7 @@ func (obj *BlockChain)CheckInputPub(ipt *InPut)(bool, float64)  {
 	} else {
 		oneBlockInput[fmt.Sprintf("%x", ipt.TxId)] = []int64{ipt.VoutIdx}
 	}
-	fmt.Printf("testId: %x\n",ipt.TxId)
+	fmt.Println("inputObj: ",obj.Txs[fmt.Sprintf("testId: %x\n",ipt.TxId)])
 	// 如果地址无交易记录，则返回false
 	if idxs[fmt.Sprintf("%x", ipt.TxId)] != nil{
 		for i, v := range idxs[fmt.Sprintf("%x", ipt.TxId)]{
